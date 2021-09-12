@@ -16,23 +16,68 @@ Process *process_running = NULL;
 struct Process *incoming[8];
 int incoming_count = 0;
 
-void super_sort(Process *incoming[8], int incoming_count){
-    Process *swap;
-    for(int j=0;j<incoming_count - 1;j++){ // son 8 en total pero comparamos desde el penultimo
-        for(int i=0;i<incoming_count - j - 1;i++){
-            if (incoming[i]->factory_number>incoming[i+1]->factory_number){
-                swap = incoming[i];
-                incoming[i] = incoming[i+1];
-                incoming[i+1] = swap;
-            } else if (incoming[i]->factory_number == incoming[i+1]->factory_number && strcmp(incoming[i] -> name, incoming[i+1]-> name) > 0) {
-                swap = incoming[i];
-                incoming[i] = incoming[i+1];
-                incoming[i+1] = swap;
-                
-            }
-        }
+void super_sort(Process *incoming[8], int incoming_count)
+{
+  Process *swap;
+  for (int j = 0; j < incoming_count - 1; j++)
+  { // son 8 en total pero comparamos desde el penultimo
+    for (int i = 0; i < incoming_count - j - 1; i++)
+    {
+      if (incoming[i]->factory_number > incoming[i + 1]->factory_number)
+      {
+        swap = incoming[i];
+        incoming[i] = incoming[i + 1];
+        incoming[i + 1] = swap;
+      }
+      else if (incoming[i]->factory_number == incoming[i + 1]->factory_number && strcmp(incoming[i]->name, incoming[i + 1]->name) > 0)
+      {
+        swap = incoming[i];
+        incoming[i] = incoming[i + 1];
+        incoming[i + 1] = swap;
+      }
     }
+  }
 };
+
+// Calculemos el Qi!
+int calculate_qi(LinkedList *queue, int queue_count, Node *process)
+{
+  int factory_process = 0;
+  int factories[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+  int factory_count = 0;
+  for (int i = 0; i < queue_count; i++)
+  {
+    Node *tmp = process;
+    bool present = false;
+    if (tmp->data->factory_number == process->data->factory_number)
+    {
+      factory_process++;
+    }
+    for (int j = 0; j < 8; j++)
+    {
+      if (factories[j] = process->data->factory_number)
+      {
+        present = true;
+        break;
+      }
+      else if (factories[j] == -1)
+      {
+        factories[j] = tmp->data->factory_number;
+        break;
+      }
+    }
+    tmp = tmp->next;
+  }
+  for (int j = 0; j < 8; j++)
+  {
+    if (factories[j] == -1)
+    {
+      break;
+    }
+    factory_count++;
+  }
+  int result = Q / (factory_process * factory_count)
+}
 
 int main(int argc, char **argv)
 {
@@ -44,11 +89,11 @@ int main(int argc, char **argv)
 
   incoming[1] = NULL;
 
-  if(argc==4){
+  if (argc == 4)
+  {
     printf("Q IS %s\n", argv[3]);
     Q = argv[3];
   }
-
 
   printf("Hello T2!\n");
 
@@ -64,9 +109,9 @@ int main(int argc, char **argv)
         "\tProcess %s from factory %s has init time of %s and %s bursts.\n",
         line[0], line[2], line[1], line[3]);
     // Create Process and add it to processes not in queue;
-    int total_bursts = 2*atoi(line[3])-1;
+    int total_bursts = 2 * atoi(line[3]) - 1;
     char new_process_name[255] = "asd";
-    Process *new_process = (Process *) malloc(sizeof(struct Process)+total_bursts*sizeof(int));
+    Process *new_process = (Process *)malloc(sizeof(struct Process) + total_bursts * sizeof(int));
     new_process->factory_number = atoi(line[1]);
     new_process->name = new_process_name;
     new_process->pid = process_count;
@@ -74,70 +119,109 @@ int main(int argc, char **argv)
     new_process->status = "READY";
     new_process->current_burst = 0;
     new_process->total_bursts = total_bursts;
-    printf("TOTAL bursts: %d\n",total_bursts);
-    // new_process.burst_array[total_bursts]; 
-    for(int i =0;i<total_bursts; i++){
-      
-      new_process->burst_array[i] = atoi(line[4+i]);
-      printf("Potato %d\n",new_process->burst_array[i]);
+    printf("TOTAL bursts: %d\n", total_bursts);
+    // new_process.burst_array[total_bursts];
+    for (int i = 0; i < total_bursts; i++)
+    {
+
+      new_process->burst_array[i] = atoi(line[4 + i]);
+      printf("Potato %d\n", new_process->burst_array[i]);
     }
     // falta guardar los A y B
-    append(process_not_queue,new_process);
+    append(process_not_queue, new_process);
     process_count++;
   }
 
-  while(true){
+  while (true)
+  {
 
-    
-    if(process_running){ // if there is a process in the cpu
+    if (process_running)
+    { // if there is a process in the cpu
       process_running->burst_array[process_running->current_burst]--;
       quantum--; // Tick down quantum, and check if quantum reaches 0, and update the process burst
-      if(process_running->burst_array[process_running->current_burst]==0){ // Proceso cede la CPU pasa a wait y se va al final de la cola
+      if (process_running->burst_array[process_running->current_burst] == 0)
+      { // Proceso cede la CPU pasa a wait y se va al final de la cola
         // check if process finished
-        if (process_running->current_burst==process_running->total_bursts-1){
+        if (process_running->current_burst == process_running->total_bursts - 1)
+        {
           process_running->status = "FINISHED";
           free(process_running);
-          process_running=NULL;
+          process_running = NULL;
         }
-        else {
-          process_running->status="WAITING";
-          process_running->current_burst++; // Now IO burst
-          append(process_queue,process_running); // proceso se va al final de la cola
+        else
+        {
+          process_running->status = "WAITING";
+          process_running->current_burst++;       // Now IO burst
+          append(process_queue, process_running); // proceso se va al final de la cola
           process_running = NULL;
         }
       }
-      else if(quantum<=0){
+      else if (quantum <= 0)
+      {
         process_running->status = "READY";
-        append(process_queue,process_running); // proceso se va al final de la cola
+        append(process_queue, process_running); // proceso se va al final de la cola
         process_running = NULL;
       }
     }
 
     // check if there is any process to add to the queue, calculate new quantum, add waiting process to queue
     incoming_count = 0;
-    if(process_not_queue->count>0){
+    if (process_not_queue->count > 0)
+    {
       Node *tmp = process_not_queue->front;
-      for(int i = 0;i<process_not_queue->count;i++){
-        if(tmp->data->init_time==current_time){
+      for (int i = 0; i < process_not_queue->count; i++)
+      {
+        if (tmp->data->init_time == current_time)
+        {
           incoming[incoming_count] = tmp->data;
           incoming_count++;
-          remove_node(process_not_queue,i-incoming_count);
+          remove_node(process_not_queue, i - incoming_count);
         }
         tmp = tmp->next;
       }
-      super_sort(incoming,incoming_count);
-      for(int i = 0;i<incoming_count;i++){
-        append(process_queue,incoming[i]);
+      super_sort(incoming, incoming_count);
+      for (int i = 0; i < incoming_count; i++)
+      {
+        append(process_queue, incoming[i]);
       }
     }
-    // add process to queue
-    // calculate qi
-
-    // update waiting
+    if (process_queue->count > 0)
+    { // update waiting
+      Node *tmp = process_queue->front;
+      for (int i = 0; i < process_queue->count; i++)
+      {
+        if (tmp->data->status == "WAITING")
+        {
+          tmp->data->burst_array[tmp->data->current_burst]--;
+          if (tmp->data->burst_array[tmp->data->current_burst] == 0)
+          {
+            tmp->data->status = "READY";
+            tmp->data->current_burst++;
+          }
+        }
+        tmp = tmp->next;
+      }
+      // add process to queue
+      if (process_running == NULL)
+      {
+        Node *tmp = process_queue->front;
+        for (int i = 0; i < process_queue->count; i++)
+        {
+          if (tmp->data->status == "READY")
+          {
+            process_running = tmp;
+            // calculate qi
+            quantum = calculate_qi(process_queue, process_running);
+            remove_node(process_queue, i);
+            break;
+          }
+          tmp = tmp->next;
+        }
+      }
+    }
 
     current_time++;
   }
 
-// stats
-
+  // stats
 }
