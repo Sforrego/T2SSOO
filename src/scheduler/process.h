@@ -6,5 +6,5 @@ typedef struct Process{
   char name[255];
   int factory_number;
   char status[10]; // RUNNING READY WAITING FINISHED
-}; 
+}Process; 
 

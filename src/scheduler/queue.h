@@ -8,13 +8,13 @@
 typedef struct Node{
     struct Process data;
     struct Node* next;
-};
+}Node;
 
 typedef struct Queue {
   int count;
   Node *front;
   Node *rear;
-};
+}Queue;
 
 
 void initialize(Queue *q){
