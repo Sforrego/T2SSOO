@@ -17,13 +17,13 @@ typedef struct Queue {
 }Queue;
 
 
-void initialize(Queue *q){
+void initializeq(Queue *q){
     q->count = 0;
     q->front = NULL;
     q->rear = NULL;
 };
 
-int isempty(Queue *q){
+int isemptyq(Queue *q){
     return (q->rear==NULL);
 }
 

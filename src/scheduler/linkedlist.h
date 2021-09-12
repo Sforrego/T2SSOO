@@ -17,13 +17,13 @@ typedef struct LinkedList {
 }LinkedList;
 
 
-void initialize(LinkedList *q){
+void initializel(LinkedList *q){
     q->count = 0;
     q->front = NULL;
     q->rear = NULL;
 };
 
-int isempty(LinkedList *q){
+int isemptyl(LinkedList *q){
     return (q->rear==NULL);
 }
 

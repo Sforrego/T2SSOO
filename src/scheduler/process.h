@@ -3,8 +3,8 @@
 
 typedef struct Process{
   int pid;
-  char name[255];
+  char *name;
   int factory_number;
-  char status[10]; // RUNNING READY WAITING FINISHED
+  char *status; // RUNNING READY WAITING FINISHED
 }Process; 
 
