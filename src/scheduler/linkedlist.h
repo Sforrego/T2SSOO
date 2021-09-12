@@ -5,10 +5,7 @@
 #include <stdlib.h>
 
 // https://www.codesdope.com/blog/article/making-a-queue-using-linked-list-in-c/
-typedef struct Node{
-    struct Process data;
-    struct Node* next;
-}Node;
+
 
 typedef struct LinkedList {
   int count;
@@ -27,12 +24,12 @@ int isemptyl(LinkedList *q){
     return (q->rear==NULL);
 }
 
-void append(LinkedList *q, Process new_process){
+void append(LinkedList *q, Process *new_process){
     Node *tmp;
     tmp = (Node *) malloc(sizeof(Node));
     tmp->data = new_process;
     tmp->next = NULL;
-    if(!isempty(q)){
+    if(!isemptyl(q)){
         q->rear->next = tmp;
         q->rear = tmp;
     }
@@ -42,10 +39,10 @@ void append(LinkedList *q, Process new_process){
     q->count++;
 }
 
-Process remove(LinkedList *q, int position){ // removes the node #position
+Process* remove_node(LinkedList *q, int position){ // removes the node #position
     Node *current_node = q->front;
     Node *tmp;
-    Process removed_process;
+    Process *removed_process;
     if(position>=q->count){
         printf("Tried to removed from a position higher than process count\n");
         return removed_process;
@@ -55,10 +52,17 @@ Process remove(LinkedList *q, int position){ // removes the node #position
             tmp = current_node;
             removed_process = tmp->data;
             q->front = NULL;
+            q->rear = NULL;
+            free(tmp);
+            break;
+        } else if (position==0){
+            tmp = current_node;
+            removed_process = tmp->data;
+            q->front = NULL;
             free(tmp);
             break;
         }
-        else if(i==position){
+        else if(i==position-1){
             tmp = current_node->next;
             removed_process = tmp->data;
             current_node->next = tmp->next;
@@ -67,6 +71,6 @@ Process remove(LinkedList *q, int position){ // removes the node #position
         }
         current_node = current_node->next;
     }
-
+    q->count--;
     return(removed_process);
 }
