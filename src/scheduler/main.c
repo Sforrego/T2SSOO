@@ -76,7 +76,8 @@ int calculate_qi(LinkedList *queue, int queue_count, Node *process)
     }
     factory_count++;
   }
-  int result = Q / (factory_process * factory_count)
+  int result = Q / (factory_process * factory_count);
+  return result;
 }
 
 int main(int argc, char **argv)
