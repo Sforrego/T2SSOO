@@ -104,25 +104,21 @@ int main(int argc, char **argv)
         line[0], line[2], line[1], line[3]);
     // Create Process and add it to processes not in queue;
     int total_bursts = 2 * atoi(line[3]) - 1;
-    char new_process_name[255] = "asd";
     Process *new_process = (Process *)malloc(sizeof(struct Process) + total_bursts * sizeof(int));
-    new_process->factory_number = atoi(line[1]);
-    new_process->name = new_process_name;
-    new_process->pid = process_count;
+    new_process->factory_number = atoi(line[2]);
     new_process->init_time = atoi(line[1]);
+    new_process->name = line[0];
+    new_process->pid = process_count;
+    printf("PROCESS %s, init time %d\n",new_process->name,new_process->init_time);
     new_process->status = "READY";
     new_process->current_burst = 0;
     new_process->total_bursts = total_bursts;
-    printf("TOTAL bursts: %d\n", total_bursts);
-    // new_process.burst_array[total_bursts];
     for (int i = 0; i < total_bursts; i++)
     {
-
       new_process->burst_array[i] = atoi(line[4 + i]);
-      printf("Potato %d\n", new_process->burst_array[i]);
     }
-    // falta guardar los A y B
     append(process_not_queue, new_process);
+    printf("Queue count %d, PROCESS TAIL init time: %d, fact number: %d\n",process_not_queue->count, process_not_queue->rear->data->init_time,process_not_queue->rear->data->factory_number );
     process_count++;
   }
 
@@ -174,6 +170,7 @@ int main(int argc, char **argv)
       {
         if (tmp->data->init_time == current_time)
         {
+          printf("DATA INIT TIME %d, CURREENT TIME %d\n",tmp->data->init_time,current_time);
           incoming[incoming_count] = tmp->data;
           incoming_count++;
           remove_node(process_not_queue, i - incoming_count);
@@ -184,7 +181,7 @@ int main(int argc, char **argv)
       for (int i = 0; i < incoming_count; i++)
       {
         append(process_queue, incoming[i]);
-        printf("[t = %d] El proceso %s ha pasado a estado RUNNING.\n",current_time,incoming[i]->name);
+        printf("[t = %d] El proceso %s se ha agregado a la cola.\n",current_time,incoming[i]->name);
       }
     }
     if (process_queue->count > 0)
@@ -217,6 +214,7 @@ int main(int argc, char **argv)
             printf("[t = %d] El proceso %s ha pasado a estado RUNNING.\n",current_time,tmp->data->name);
             // calculate qi
             quantum = calculate_qi(process_queue, process_running);
+            printf("[t = %d] Quantum asignado al proceso %s: %d.\n",current_time,tmp->data->name,quantum);
             remove_node(process_queue, i);
             break;
           }

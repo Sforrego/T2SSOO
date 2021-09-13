@@ -4,12 +4,12 @@
 typedef struct Process{
   int pid;
   char *name;
-  int factory_number;
   char *status; // RUNNING READY WAITING FINISHED
+  int factory_number;
+  int init_time;
+  int total_bursts;
   int current_burst;
   int burst_array[1];
-  int total_bursts;
-  int init_time;
 }Process; 
 
 typedef struct Node{
