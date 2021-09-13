@@ -120,6 +120,8 @@ int main(int argc, char **argv)
     process_count++;
   }
 
+  FILE * fw = fopen(argv[2],"w");
+
   while (true)
   {
     if(process_not_queue->count==0&&process_queue->count==0&&process_running==NULL){
@@ -131,6 +133,9 @@ int main(int argc, char **argv)
       Node *tmp = process_queue->front;
       for (int i = 0; i < process_queue->count; i++)
       {
+        if(strcmp(tmp->data->status,"WAITING")==0||strcmp(tmp->data->status,"READY")==0){
+          tmp->data->waiting_time++;
+        }
         if (strcmp(tmp->data->status,"WAITING")==0)
         {
           tmp->data->burst_array[tmp->data->current_burst]--;
@@ -154,7 +159,11 @@ int main(int argc, char **argv)
         if (process_running->current_burst == process_running->total_bursts - 1)
         {
           process_running->status = "FINISHED";
+          process_running->turnaround_time = current_time - process_running->init_time;
           printf("[t = %d] El proceso %s ha pasado a estado FINISHED.\n",current_time,process_running->name);
+          // write to file here, check speed
+          fprintf(fw,"%s,%d,%d,%d,%d,%d\n",process_running->name,
+          process_running->times_chosen,process_running->times_interrupted,process_running->turnaround_time,process_running->response_time,process_running->waiting_time);
           free(process_running);
           process_running = NULL;
         }
@@ -170,6 +179,7 @@ int main(int argc, char **argv)
       else if (quantum <= 0)
       {
         process_running->status = "READY";
+        process_running->times_interrupted++;
         append(process_queue, process_running); // proceso se va al final de la cola
         printf("[t = %d] El proceso %s ha pasado a estado READY.\n",current_time,process_running->name);
         process_running = NULL;
@@ -215,7 +225,12 @@ int main(int argc, char **argv)
         {
           process_running = tmp->data;
           tmp->data->status = "RUNNING";
+          tmp->data->times_chosen++;
+          if(!tmp->data->response_time){
+            tmp->data->response_time = current_time - tmp->data->init_time;
+          }
           printf("[t = %d] El proceso %s ha pasado a estado RUNNING.\n",current_time,tmp->data->name);
+
           // calculate qi
           quantum = calculate_qi(process_queue, process_running);
           remove_node(process_queue, i, 0);
@@ -231,4 +246,5 @@ int main(int argc, char **argv)
   }
 
   // stats
+  fclose(fw);
 }

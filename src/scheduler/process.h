@@ -9,7 +9,13 @@ typedef struct Process{
   int init_time;
   int total_bursts;
   int current_burst;
+  int times_chosen;
+  int times_interrupted;
+  int turnaround_time;
+  int response_time;
+  int waiting_time;
   int burst_array[1];
+  
 }Process; 
 
 typedef struct Node{
