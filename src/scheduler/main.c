@@ -40,42 +40,35 @@ void super_sort(Process *incoming[8], int incoming_count)
 };
 
 // Calculemos el Qi!
-int calculate_qi(LinkedList *queue, int queue_count, Node *process)
+int calculate_qi(LinkedList *queue, Node *process)
 {
-  int factory_process = 0;
+  int factory_process = 0; // procesos de la misma fabrica que el proceso a pasar a cpu
   int factories[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
   int factory_count = 0;
-  for (int i = 0; i < queue_count; i++)
+  Node *tmp = queue->front; // temporal es el primer nodo de la cola
+
+  for (int i = 0; i < queue->count; i++) // itero por la cola
   {
-    Node *tmp = process;
-    bool present = false;
-    if (tmp->data->factory_number == process->data->factory_number)
+    if (tmp->data->factory_number == process->data->factory_number) // reviso cuantos procesos son de la misma fabrica que el proceso a pasar a cpu
     {
       factory_process++;
     }
     for (int j = 0; j < 8; j++)
     {
-      if (factories[j] = process->data->factory_number)
+      if (factories[j] == tmp->data->factory_number) // si encuentro la fabrica del proceso que estamos revisando no la agrego
       {
-        present = true;
         break;
       }
-      else if (factories[j] == -1)
+      else if (factories[j] == -1) // si es que no encuentro la fabrica entonces la agrego
       {
         factories[j] = tmp->data->factory_number;
+        factory_count++;	
         break;
       }
     }
     tmp = tmp->next;
   }
-  for (int j = 0; j < 8; j++)
-  {
-    if (factories[j] == -1)
-    {
-      break;
-    }
-    factory_count++;
-  }
+
   int result = Q / (factory_process * factory_count);
   return result;
 }
