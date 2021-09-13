@@ -210,7 +210,7 @@ int main(int argc, char **argv)
         for (int i = 0; i < incoming_count; i++)
         {
           append(process_queue, incoming[i]);
-          printf("El proceso %s ha sido creado.\n",incoming[i]->name);
+          printf("[t = %d] El proceso %s ha sido creado.\n",current_time,incoming[i]->name);
         }
       }
     }
