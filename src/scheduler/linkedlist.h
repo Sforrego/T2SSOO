@@ -39,12 +39,20 @@ void append(LinkedList *q, Process *new_process){
     q->count++;
 }
 
-Process* remove_node(LinkedList *q, int position){ // removes the node #position
+void printq(LinkedList *q){
+    Node *tmp = q -> front;
+    printf("PRINTING QUEUE OF %d NODES\n",q->count);
+    for(int i=0; i<q->count;i++){
+        printf("NODE %s POSITION %d\n",tmp->data->name,i);
+        tmp = tmp -> next;
+    }
+}
+
+Process* remove_node(LinkedList *q, int position, int to_free){ // removes the node #position
     Node *current_node = q->front;
     Node *tmp;
     Process *removed_process;
     if(position>=q->count){
-        printf("Tried to removed from a position higher than process count\n");
         return removed_process;
     }
     for(int i=0; i<q->count;i++){
@@ -53,20 +61,34 @@ Process* remove_node(LinkedList *q, int position){ // removes the node #position
             removed_process = tmp->data;
             q->front = NULL;
             q->rear = NULL;
-            free(tmp);
+            if(to_free){
+             free(tmp);
+            }
             break;
-        } else if (position==0){
+        } else if (position==0){ // if removing the first element
             tmp = current_node;
             removed_process = tmp->data;
-            q->front = NULL;
-            free(tmp);
+            q->front = current_node->next;
+           if(to_free){
+             free(tmp);
+            }            break;
+        } else if (position==q->count-1&&i==position-1){ // if removing the last element
+            tmp = current_node->next;
+            removed_process = tmp->data;
+            current_node->next = tmp->next; //tmp->next is null
+            q->rear = current_node;
+           if(to_free){
+             free(tmp);
+            }
             break;
         }
         else if(i==position-1){
             tmp = current_node->next;
             removed_process = tmp->data;
             current_node->next = tmp->next;
-            free(tmp);
+            if(to_free){
+             free(tmp);
+            }
             break;
         }
         current_node = current_node->next;

@@ -109,7 +109,6 @@ int main(int argc, char **argv)
     new_process->init_time = atoi(line[1]);
     new_process->name = line[0];
     new_process->pid = process_count;
-    printf("PROCESS %s, init time %d\n",new_process->name,new_process->init_time);
     new_process->status = "READY";
     new_process->current_burst = 0;
     new_process->total_bursts = total_bursts;
@@ -118,20 +117,38 @@ int main(int argc, char **argv)
       new_process->burst_array[i] = atoi(line[4 + i]);
     }
     append(process_not_queue, new_process);
-    printf("Queue count %d, PROCESS TAIL init time: %d, fact number: %d\n",process_not_queue->count, process_not_queue->rear->data->init_time,process_not_queue->rear->data->factory_number );
     process_count++;
   }
 
   while (true)
   {
-    if(process_not_queue->count==0&&process_queue->count==0){
+    if(process_not_queue->count==0&&process_queue->count==0&&process_running==NULL){
       break;
     }
+
+    if (process_queue->count > 0)
+    { // update waiting
+      Node *tmp = process_queue->front;
+      for (int i = 0; i < process_queue->count; i++)
+      {
+        if (strcmp(tmp->data->status,"WAITING")==0)
+        {
+          tmp->data->burst_array[tmp->data->current_burst]--;
+          if (tmp->data->burst_array[tmp->data->current_burst] == 0)
+          {
+            tmp->data->status = "READY";
+            tmp->data->current_burst++;
+            printf("[t = %d] El proceso %s ha pasado a estado READY.\n",current_time,tmp->data->name);
+          }
+        }
+        tmp = tmp->next;
+      }}
+
     if (process_running)
     { // if there is a process in the cpu
       process_running->burst_array[process_running->current_burst]--;
       quantum--; // Tick down quantum, and check if quantum reaches 0, and update the process burst
-      if (process_running->burst_array[process_running->current_burst] == 0)
+      if (process_running->burst_array[process_running->current_burst] == 0) 
       { // Proceso cede la CPU pasa a wait y se va al final de la cola
         // check if process finished
         if (process_running->current_burst == process_running->total_bursts - 1)
@@ -160,68 +177,55 @@ int main(int argc, char **argv)
     } else {
       printf("[t = %d] No hay ningun proceso ejecutando en la CPU.\n",current_time);
     }
-
     // check if there is any process to add to the queue, calculate new quantum, add waiting process to queue
     incoming_count = 0;
     if (process_not_queue->count > 0)
     {
       Node *tmp = process_not_queue->front;
+
       for (int i = 0; i < process_not_queue->count; i++)
       {
-        if (tmp->data->init_time == current_time)
+        if (tmp->data->init_time == current_time) // ACA HAY SEG FAULT tmp es null
         {
-          printf("DATA INIT TIME %d, CURREENT TIME %d\n",tmp->data->init_time,current_time);
+          remove_node(process_not_queue, i - incoming_count,0);
           incoming[incoming_count] = tmp->data;
           incoming_count++;
-          remove_node(process_not_queue, i - incoming_count);
         }
-        tmp = tmp->next;
+      
+      tmp=tmp->next;
+        
       }
-      super_sort(incoming, incoming_count);
-      for (int i = 0; i < incoming_count; i++)
-      {
-        append(process_queue, incoming[i]);
-        printf("[t = %d] El proceso %s se ha agregado a la cola.\n",current_time,incoming[i]->name);
+      if(incoming_count>0){
+        super_sort(incoming, incoming_count);
+        for (int i = 0; i < incoming_count; i++)
+        {
+          append(process_queue, incoming[i]);
+          printf("El proceso %s ha sido creado.\n",incoming[i]->name);
+        }
       }
     }
-    if (process_queue->count > 0)
-    { // update waiting
+
+      // move process to CPU
+    if (process_running == NULL && process_queue->count>0)
+    {
       Node *tmp = process_queue->front;
       for (int i = 0; i < process_queue->count; i++)
       {
-        if (strcmp(tmp->data->status,"WAITING")==0)
+        if (strcmp(tmp->data->status,"READY")==0)
         {
-          tmp->data->burst_array[tmp->data->current_burst]--;
-          if (tmp->data->burst_array[tmp->data->current_burst] == 0)
-          {
-            tmp->data->status = "READY";
-            tmp->data->current_burst++;
-            printf("[t = %d] El proceso %s ha pasado a estado READY.\n",current_time,tmp->data->name);
-          }
+          process_running = tmp->data;
+          tmp->data->status = "RUNNING";
+          printf("[t = %d] El proceso %s ha pasado a estado RUNNING.\n",current_time,tmp->data->name);
+          // calculate qi
+          quantum = calculate_qi(process_queue, process_running);
+          remove_node(process_queue, i, 0);
+          break;
         }
+
         tmp = tmp->next;
       }
-      // add process to queue
-      if (process_running == NULL)
-      {
-        Node *tmp = process_queue->front;
-        for (int i = 0; i < process_queue->count; i++)
-        {
-          if (strcmp(tmp->data->status,"READY")==0)
-          {
-            process_running = tmp->data;
-            tmp->data->status = "RUNNING";
-            printf("[t = %d] El proceso %s ha pasado a estado RUNNING.\n",current_time,tmp->data->name);
-            // calculate qi
-            quantum = calculate_qi(process_queue, process_running);
-            printf("[t = %d] Quantum asignado al proceso %s: %d.\n",current_time,tmp->data->name,quantum);
-            remove_node(process_queue, i);
-            break;
-          }
-          tmp = tmp->next;
-        }
-      }
     }
+    
 
     current_time++;
   }
