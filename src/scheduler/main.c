@@ -89,6 +89,8 @@ int main(int argc, char **argv)
     Q = atoi(argv[3]);
   }
 
+  printf("SIZES LL: %ld, NODE:%ld, PROCESS:%ld, INT:%ld",sizeof(LinkedList),sizeof(Node),sizeof(Process),sizeof(int));
+
   printf("Hello T2!\n");
 
   char *filename = argv[1];
@@ -112,6 +114,14 @@ int main(int argc, char **argv)
     new_process->status = "READY";
     new_process->current_burst = 0;
     new_process->total_bursts = total_bursts;
+    new_process->created = 0;
+    new_process->response_time_registered = 0;
+    new_process->times_interrupted = 0;
+    new_process->turnaround_time = 0;
+    new_process->response_time = 0;
+    new_process->waiting_time = 0;
+    new_process->times_chosen = 0;
+
     for (int i = 0; i < total_bursts; i++)
     {
       new_process->burst_array[i] = atoi(line[4 + i]);
@@ -128,7 +138,7 @@ int main(int argc, char **argv)
       break;
     }
 
-    
+    incoming_count = 0;
 
     if (process_running) 
     { // 1. if there is a process in the cpu
@@ -156,7 +166,8 @@ int main(int argc, char **argv)
         {
           process_running->status = "WAITING";
           process_running->current_burst++;       // Now IO burst
-          append(process_queue, process_running); // proceso se va al final de la cola
+          incoming[0] = process_running; // proceso se une al grupo que entra a la cola en 2
+          incoming_count++;
           printf("[t = %d] El proceso %s ha pasado a estado WAITING.\n",current_time,process_running->name);
           process_running = NULL;
         }
@@ -164,21 +175,21 @@ int main(int argc, char **argv)
       else if (quantum <= 0)
       {
         process_running->status = "READY";
-        append(process_queue, process_running); // proceso se va al final de la cola
+        incoming[0] = process_running; // proceso se une al grupo que entra a la cola en 2
+        incoming_count++;
         printf("[t = %d] El proceso %s ha pasado a estado READY.\n",current_time,process_running->name);
         process_running = NULL;
       }
     } 
     // check if there is any process to add to the queue, calculate new quantum, add waiting process to queue
     // 2. procesos creados entran a la cola
-    incoming_count = 0;
-    if (process_not_queue->count > 0)
+    if (process_not_queue->count+incoming_count > 0)
     {
       Node *tmp = process_not_queue->front;
 
-      for (int i = 0; i < process_not_queue->count; i++)
+      for (int i = incoming_count; i < process_not_queue->count; i++)
       {
-        if (tmp->data->init_time == current_time) // ACA HAY SEG FAULT tmp es null
+        if (tmp->data->init_time == current_time) 
         {
           remove_node(process_not_queue, i - incoming_count,0);
           incoming[incoming_count] = tmp->data;
@@ -193,7 +204,10 @@ int main(int argc, char **argv)
         for (int i = 0; i < incoming_count; i++)
         {
           append(process_queue, incoming[i]);
-          printf("[t = %d] El proceso %s ha sido creado.\n",current_time,incoming[i]->name);
+          if(!incoming[i]->created){
+            printf("[t = %d] El proceso %s ha sido creado.\n",current_time,incoming[i]->name);
+            incoming[i]->created = 1;
+          }
         }
       }
     }
@@ -253,6 +267,8 @@ int main(int argc, char **argv)
     current_time++;
   }
 
-  // stats
+  free(process_queue); 
+  free(process_not_queue); 
   fclose(fw);
+  input_file_destroy(file);
 }

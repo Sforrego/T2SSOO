@@ -48,6 +48,16 @@ void printq(LinkedList *q){
     }
 }
 
+void delete_queue(LinkedList *q){
+    Node *current_node = q->front;
+    Node *tmp;
+    for(int i=0; i<q->count;i++){
+        tmp = current_node->next;
+        free(current_node);
+        current_node = tmp;
+    }      
+}
+
 Process* remove_node(LinkedList *q, int position, int to_free){ // removes the node #position
     Node *current_node = q->front;
     Node *tmp;

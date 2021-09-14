@@ -15,6 +15,7 @@ typedef struct Process{
   int response_time;
   int response_time_registered;
   int waiting_time;
+  int created;
   int burst_array[1];
   
 }Process; 
