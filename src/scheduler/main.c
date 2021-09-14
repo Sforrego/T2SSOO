@@ -128,31 +128,16 @@ int main(int argc, char **argv)
       break;
     }
 
-    if (process_queue->count > 0)
-    { // update waiting
-      Node *tmp = process_queue->front;
-      for (int i = 0; i < process_queue->count; i++)
-      {
-        if(strcmp(tmp->data->status,"WAITING")==0||strcmp(tmp->data->status,"READY")==0){
-          tmp->data->waiting_time++;
-        }
-        if (strcmp(tmp->data->status,"WAITING")==0)
-        {
-          tmp->data->burst_array[tmp->data->current_burst]--;
-          if (tmp->data->burst_array[tmp->data->current_burst] == 0)
-          {
-            tmp->data->status = "READY";
-            tmp->data->current_burst++;
-            printf("[t = %d] El proceso %s ha pasado a estado READY.\n",current_time,tmp->data->name);
-          }
-        }
-        tmp = tmp->next;
-      }}
+    
 
-    if (process_running)
-    { // if there is a process in the cpu
+    if (process_running) 
+    { // 1. if there is a process in the cpu
       process_running->burst_array[process_running->current_burst]--;
       quantum--; // Tick down quantum, and check if quantum reaches 0, and update the process burst
+      if (quantum <= 0)
+      {
+        process_running->times_interrupted++;}
+
       if (process_running->burst_array[process_running->current_burst] == 0) 
       { // Proceso cede la CPU pasa a wait y se va al final de la cola
         // check if process finished
@@ -179,15 +164,13 @@ int main(int argc, char **argv)
       else if (quantum <= 0)
       {
         process_running->status = "READY";
-        process_running->times_interrupted++;
         append(process_queue, process_running); // proceso se va al final de la cola
         printf("[t = %d] El proceso %s ha pasado a estado READY.\n",current_time,process_running->name);
         process_running = NULL;
       }
-    } else {
-      printf("[t = %d] No hay ningun proceso ejecutando en la CPU.\n",current_time);
-    }
+    } 
     // check if there is any process to add to the queue, calculate new quantum, add waiting process to queue
+    // 2. procesos creados entran a la cola
     incoming_count = 0;
     if (process_not_queue->count > 0)
     {
@@ -215,7 +198,7 @@ int main(int argc, char **argv)
       }
     }
 
-      // move process to CPU
+      // 3. move process to CPU
     if (process_running == NULL && process_queue->count>0)
     {
       Node *tmp = process_queue->front;
@@ -226,8 +209,9 @@ int main(int argc, char **argv)
           process_running = tmp->data;
           tmp->data->status = "RUNNING";
           tmp->data->times_chosen++;
-          if(!tmp->data->response_time){
+          if(!tmp->data->response_time_registered){
             tmp->data->response_time = current_time - tmp->data->init_time;
+            tmp->data->response_time_registered = 1;
           }
           printf("[t = %d] El proceso %s ha pasado a estado RUNNING.\n",current_time,tmp->data->name);
 
@@ -239,8 +223,32 @@ int main(int argc, char **argv)
 
         tmp = tmp->next;
       }
+       
+    if(process_running==NULL){
+
+      printf("[t = %d] No hay ningun proceso ejecutando en la CPU.\n",current_time);
     }
-    
+      // 5. update waiting
+      tmp = process_queue->front;
+      for (int i = 0; i < process_queue->count; i++)
+      {
+        if(strcmp(tmp->data->status,"WAITING")==0||strcmp(tmp->data->status,"READY")==0){
+          tmp->data->waiting_time++;
+        }
+        if (strcmp(tmp->data->status,"WAITING")==0)
+        {
+          tmp->data->burst_array[tmp->data->current_burst]--;
+          if (tmp->data->burst_array[tmp->data->current_burst] == 0)
+          {
+            tmp->data->status = "READY";
+            tmp->data->current_burst++;
+            printf("[t = %d] El proceso %s ha pasado a estado READY.\n",current_time+1,tmp->data->name);
+          }
+        }
+        tmp = tmp->next;
+      }
+    }
+   
 
     current_time++;
   }
