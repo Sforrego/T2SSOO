@@ -62,7 +62,7 @@ int calculate_qi(LinkedList *queue, Process *process)
       else if (factories[j] == -1) // si es que no encuentro la fabrica entonces la agrego
       {
         factories[j] = tmp->data->factory_number;
-        factory_count++;	
+        factory_count++;
         break;
       }
     }
@@ -89,7 +89,7 @@ int main(int argc, char **argv)
     Q = atoi(argv[3]);
   }
 
-  printf("SIZES LL: %ld, NODE:%ld, PROCESS:%ld, INT:%ld",sizeof(LinkedList),sizeof(Node),sizeof(Process),sizeof(int));
+  printf("SIZES LL: %ld, NODE:%ld, PROCESS:%ld, INT:%ld", sizeof(LinkedList), sizeof(Node), sizeof(Process), sizeof(int));
 
   printf("Hello T2!\n");
 
@@ -130,45 +130,47 @@ int main(int argc, char **argv)
     process_count++;
   }
 
-  FILE * fw = fopen(argv[2],"w");
+  FILE *fw = fopen(argv[2], "w");
 
   while (true)
   {
-    if(process_not_queue->count==0&&process_queue->count==0&&process_running==NULL){
+    if (process_not_queue->count == 0 && process_queue->count == 0 && process_running == NULL)
+    {
       break;
     }
 
     incoming_count = 0;
 
-    if (process_running) 
+    if (process_running)
     { // 1. if there is a process in the cpu
       process_running->burst_array[process_running->current_burst]--;
       quantum--; // Tick down quantum, and check if quantum reaches 0, and update the process burst
       if (quantum <= 0)
       {
-        process_running->times_interrupted++;}
+        process_running->times_interrupted++;
+      }
 
-      if (process_running->burst_array[process_running->current_burst] == 0) 
+      if (process_running->burst_array[process_running->current_burst] == 0)
       { // Proceso cede la CPU pasa a wait y se va al final de la cola
         // check if process finished
         if (process_running->current_burst == process_running->total_bursts - 1)
         {
           process_running->status = "FINISHED";
           process_running->turnaround_time = current_time - process_running->init_time;
-          printf("[t = %d] El proceso %s ha pasado a estado FINISHED.\n",current_time,process_running->name);
+          printf("[t = %d] El proceso %s ha pasado a estado FINISHED.\n", current_time, process_running->name);
           // write to file here, check speed
-          fprintf(fw,"%s,%d,%d,%d,%d,%d\n",process_running->name,
-          process_running->times_chosen,process_running->times_interrupted,process_running->turnaround_time,process_running->response_time,process_running->waiting_time);
+          fprintf(fw, "%s,%d,%d,%d,%d,%d\n", process_running->name,
+                  process_running->times_chosen, process_running->times_interrupted, process_running->turnaround_time, process_running->response_time, process_running->waiting_time);
           free(process_running);
           process_running = NULL;
         }
         else
         {
           process_running->status = "WAITING";
-          process_running->current_burst++;       // Now IO burst
-          incoming[0] = process_running; // proceso se une al grupo que entra a la cola en 2
+          process_running->current_burst++; // Now IO burst
+          incoming[0] = process_running;    // proceso se une al grupo que entra a la cola en 2
           incoming_count++;
-          printf("[t = %d] El proceso %s ha pasado a estado WAITING.\n",current_time,process_running->name);
+          printf("[t = %d] El proceso %s ha pasado a estado WAITING.\n", current_time, process_running->name);
           process_running = NULL;
         }
       }
@@ -177,98 +179,103 @@ int main(int argc, char **argv)
         process_running->status = "READY";
         incoming[0] = process_running; // proceso se une al grupo que entra a la cola en 2
         incoming_count++;
-        printf("[t = %d] El proceso %s ha pasado a estado READY.\n",current_time,process_running->name);
+        printf("[t = %d] El proceso %s ha pasado a estado READY.\n", current_time, process_running->name);
         process_running = NULL;
       }
-    } 
+    }
     // check if there is any process to add to the queue, calculate new quantum, add waiting process to queue
     // 2. procesos creados entran a la cola
-    if (process_not_queue->count+incoming_count > 0)
+    if (process_not_queue->count + incoming_count > 0)
     {
       Node *tmp = process_not_queue->front;
+      Node *tmp2;
 
       for (int i = incoming_count; i < process_not_queue->count; i++)
       {
-        if (tmp->data->init_time == current_time) 
+        tmp2 = tmp->next;
+        if (tmp->data->init_time == current_time)
         {
-          remove_node(process_not_queue, i - incoming_count,0);
           incoming[incoming_count] = tmp->data;
+          remove_node(process_not_queue, i - incoming_count, 1);
           incoming_count++;
         }
-      
-      tmp=tmp->next;
-        
+
+        tmp = tmp2;
       }
-      if(incoming_count>0){
+      if (incoming_count > 0)
+      {
         super_sort(incoming, incoming_count);
         for (int i = 0; i < incoming_count; i++)
         {
           append(process_queue, incoming[i]);
-          if(!incoming[i]->created){
-            printf("[t = %d] El proceso %s ha sido creado.\n",current_time,incoming[i]->name);
+          if (!incoming[i]->created)
+          {
+            printf("[t = %d] El proceso %s ha sido creado.\n", current_time, incoming[i]->name);
             incoming[i]->created = 1;
           }
         }
       }
     }
 
-      // 3. move process to CPU
-    if (process_running == NULL && process_queue->count>0)
+    // 3. move process to CPU
+    if (process_running == NULL && process_queue->count > 0)
     {
       Node *tmp = process_queue->front;
       for (int i = 0; i < process_queue->count; i++)
       {
-        if (strcmp(tmp->data->status,"READY")==0)
+        if (strcmp(tmp->data->status, "READY") == 0)
         {
           process_running = tmp->data;
           tmp->data->status = "RUNNING";
           tmp->data->times_chosen++;
-          if(!tmp->data->response_time_registered){
+          if (!tmp->data->response_time_registered)
+          {
             tmp->data->response_time = current_time - tmp->data->init_time;
             tmp->data->response_time_registered = 1;
           }
-          printf("[t = %d] El proceso %s ha pasado a estado RUNNING.\n",current_time,tmp->data->name);
+          printf("[t = %d] El proceso %s ha pasado a estado RUNNING.\n", current_time, tmp->data->name);
 
           // calculate qi
           quantum = calculate_qi(process_queue, process_running);
-          remove_node(process_queue, i, 0);
+          remove_node(process_queue, i, 1);
           break;
         }
 
         tmp = tmp->next;
       }
-       
-    if(process_running==NULL){
 
-      printf("[t = %d] No hay ningun proceso ejecutando en la CPU.\n",current_time);
-    }
+      if (process_running == NULL)
+      {
+
+        printf("[t = %d] No hay ningun proceso ejecutando en la CPU.\n", current_time);
+      }
       // 5. update waiting
       tmp = process_queue->front;
       for (int i = 0; i < process_queue->count; i++)
       {
-        if(strcmp(tmp->data->status,"WAITING")==0||strcmp(tmp->data->status,"READY")==0){
+        if (strcmp(tmp->data->status, "WAITING") == 0 || strcmp(tmp->data->status, "READY") == 0)
+        {
           tmp->data->waiting_time++;
         }
-        if (strcmp(tmp->data->status,"WAITING")==0)
+        if (strcmp(tmp->data->status, "WAITING") == 0)
         {
           tmp->data->burst_array[tmp->data->current_burst]--;
           if (tmp->data->burst_array[tmp->data->current_burst] == 0)
           {
             tmp->data->status = "READY";
             tmp->data->current_burst++;
-            printf("[t = %d] El proceso %s ha pasado a estado READY.\n",current_time+1,tmp->data->name);
+            printf("[t = %d] El proceso %s ha pasado a estado READY.\n", current_time + 1, tmp->data->name);
           }
         }
         tmp = tmp->next;
       }
     }
-   
 
     current_time++;
   }
 
-  free(process_queue); 
-  free(process_not_queue); 
+  free(process_queue);
+  free(process_not_queue);
   fclose(fw);
   input_file_destroy(file);
 }
